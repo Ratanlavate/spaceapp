@@ -147,7 +147,8 @@ RUN set -eux; \
       mkdir -p "/out/packages/$p"; \
       cp "packages/$p/package.json" "/out/packages/$p/package.json"; \
       cp -r "packages/$p/dist" "/out/packages/$p/dist"; \
-    done
+    done; \
+    cp -r packages/db/migrations /out/packages/db/migrations
 
 FROM build AS cli-tree
 RUN set -eux; \

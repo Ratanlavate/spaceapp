@@ -11,6 +11,7 @@ on:
       - "scripts/**"
       - "starter-memory/**"
       - "Dockerfile"
+      - ".dockerignore"
       - "package.json"
       - "package-lock.json"
   push:
@@ -25,6 +26,7 @@ on:
       - "scripts/**"
       - "starter-memory/**"
       - "Dockerfile"
+      - ".dockerignore"
       - "package.json"
       - "package-lock.json"
   workflow_dispatch:
@@ -214,6 +216,35 @@ jobs:
             sleep 2
           done
           timeout 10 docker exec smoke-browser test -S /run/spaceapp-browser/browser-host.sock
+          cat > smoke/browser-host-health.js <<'EOF'
+          const net = require("node:net");
+          const socketPath = process.env.SPACE_BROWSER_HOST_SOCKET || "/run/spaceapp-browser/browser-host.sock";
+          const fail = (message) => { console.error(message); process.exit(1); };
+          const body = Buffer.from(JSON.stringify({ kind: "request", requestId: "smoke-health", method: "health", params: {} }), "utf8");
+          const frame = Buffer.alloc(4 + body.length);
+          frame.writeUInt32BE(body.length, 0);
+          body.copy(frame, 4);
+          const socket = net.connect(socketPath);
+          let buffer = Buffer.alloc(0);
+          socket.on("connect", () => socket.write(frame));
+          socket.on("data", (chunk) => {
+            buffer = Buffer.concat([buffer, chunk]);
+            while (buffer.length >= 4) {
+              const length = buffer.readUInt32BE(0);
+              if (buffer.length < length + 4) return;
+              const envelope = JSON.parse(buffer.subarray(4, length + 4).toString("utf8"));
+              buffer = buffer.subarray(length + 4);
+              if (envelope.kind !== "response" || envelope.requestId !== "smoke-health") continue;
+              if (!envelope.ok) fail(`browser host health failed: ${JSON.stringify(envelope.error)}`);
+              console.log(`browser host health: ${JSON.stringify(envelope.result)}`);
+              socket.end();
+              process.exit(0);
+            }
+          });
+          socket.on("error", (error) => fail(`socket error: ${error.message}`));
+          setTimeout(() => fail("timed out waiting for browser host health"), 20000);
+          EOF
+          timeout 30 docker exec -i smoke-browser node < smoke/browser-host-health.js
           timeout 300 docker exec smoke-browser chromium --headless --no-sandbox --disable-gpu --disable-dev-shm-usage --dump-dom about:blank | grep -qi html
 
       - name: Print smoke container logs on failure
