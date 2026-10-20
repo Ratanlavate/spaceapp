@@ -197,7 +197,6 @@ jobs:
           timeout 10 docker exec smoke-postgres pg_isready -U spaceapp -d spaceapp
           timeout 300 docker run --rm --network smoke-net \
             -e SPACE_DATABASE_URL="postgres://spaceapp:spaceapp-smoke-password@smoke-postgres:5432/spaceapp" \
-            -v "$PWD/packages/db/migrations:/app/packages/db/migrations:ro" \
             --entrypoint node \
             "$image" packages/db/dist/migrate.js
           docker run -d --name smoke-browser --network smoke-net \
