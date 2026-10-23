@@ -179,7 +179,7 @@ ENTRYPOINT ["/app/deploy/docker/core-entrypoint.sh"]
 
 FROM runtime-base AS browser
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends chromium fonts-liberation liblzma5 \
+    && apt-get install -y --no-install-recommends chromium fonts-liberation liblzma5 xvfb \
     && rm -rf /var/lib/apt/lists/* \
     && install -d -o spaceapp -g spaceapp -m 0700 \
       /var/lib/spaceapp \
@@ -205,6 +205,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends python3-minimal \
     && rm -rf /var/lib/apt/lists/* \
     && npm install --global --no-audit --no-fund @opencode/cli@2.0.32 \
+    && rm -rf /usr/local/lib/node_modules/@opencode/cli/node_modules/@opencode/cli-* \
     && install -d -o spaceapp -g spaceapp -m 0700 /var/lib/spaceapp-cli/vendor \
     && npm cache clean --force \
     && install -d -o spaceapp -g spaceapp -m 0700 \
