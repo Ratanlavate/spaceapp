@@ -17,6 +17,7 @@ const publicTestModules = [
   "portable-backup-restore.test.mjs",
   "prune-container-native-binaries.test.mjs",
   "published-container-verification.test.mjs",
+  "shipped-image-evidence.test.mjs",
   "public-compose-config.test.mjs",
   "public-credential-install.test.mjs",
   "embed-image-lock.test.mjs",
